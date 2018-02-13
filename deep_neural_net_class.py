@@ -11,7 +11,7 @@ class AgentMind():
     
     def set_params(self, new_params):
         self.__parameters = new_params
-        
+
     def init_params_he(self, layers_dims):
         parameters = {}
         L = len(layers_dims)
