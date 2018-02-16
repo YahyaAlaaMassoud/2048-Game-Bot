@@ -3,15 +3,56 @@ from helper_functions import img2vec
 import os
 import time
 import numpy as np
+from base64 import b16encode
+
+color_to_number = {
+                     "b'cdc1b4'": 0,
+                     "b'eee4da'": 2,
+                     "b'ede0c8'": 4,
+                     "b'f2b179'": 8,
+                     "b'f59563'": 16,
+                     "b'f67c5f'": 32,
+                     "b'f65e3b'": 64,
+                     "b'edcf72'": 128,
+                     "b'edcc61'": 256,
+                     "b'edc850'": 512,
+                     "b'edc53f'": 1024,
+                     "b'edc22e'": 2048
+                  }
 
 def screen_grab(x, y, square_pad, image_size):
     box = (x, y, x + square_pad, y + square_pad)
     im = ImageGrab.grab(box)
 #    im = resize(im, (80,80))
 #    im.save("images/"+'full_snap__' +str(int(time.time())) + '.png', 'PNG')
-    im = resize(im, image_size)
-    im = img2vec(np.array(im), 0)
+#    print(im[1,1])
+#    im = resize(im, image_size)
+#    im = img2vec(np.array(im), 0)
     return im    
+
+def get_matrix(image):
+    image = image.convert('RGB')
+    matrix = []
+    x = 30
+    for i in range(4):
+        y = 30
+        for j in range(4):
+            r, g, b = image.getpixel((x, y))
+            matrix.append(color_to_number[str(b16encode(bytes((r, g, b)))).lower()])
+            y = y + 120
+        x = x + 120
+    return matrix
+
+def get_state(x, y, square_pad, image_size):
+    im = screen_grab(x, y, square_pad, image_size)
+    matrix = get_matrix(im)
+    matrix = normalize_matrix(matrix)
+    return np.array(matrix).reshape(len(matrix), 1)
+
+def normalize_matrix(mat):
+    maxi = max(mat)
+    normalized = [float(max(0, np.log2(x) / np.log2(maxi))) for x in mat]
+    return normalized
 
 def read_empty_grid():
     im = Image.open("images/empty_grid.png")
@@ -24,3 +65,26 @@ def read_empty_grid():
 
 def resize(image, size):
     return ImageOps.fit(image, size, Image.ANTIALIAS)
+
+
+#im = Image.open('images/full snap.png')
+#mat = get_matrix(im)
+#mat = normalize_matrix(mat)
+#mat = np.array(mat)
+#print(b'#'+b16encode(bytes((238, 228, 218))))
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      

@@ -1,16 +1,17 @@
 from deep_neural_net_class import AgentMind
+import sys, os
+sys.path.append(os.path.abspath(os.path.join('.', 'bot')))
 from bot import Bot
-from web_controller import WebController
+#from web_controller import WebController
 from random import random, randint
 import numpy as np
 import smtplib
 from grab import screen_grab
-import os
 import time
 import pickle
 
 class GeneticEvolution():
-    def __init__(self, retain = 0.25, random_select = 0.08, mutate_rate = 0.05):
+    def __init__(self, retain = 0.3, random_select = 0.08, mutate_rate = 0.08):
         self.retain = retain
         self.random_select = random_select
         self.mutate_rate = mutate_rate
@@ -28,10 +29,13 @@ class GeneticEvolution():
 #   agents is an array of tuples of (agent, score)
     def get_fittest_agents(self, agents):
         retain_length = int(len(agents) * self.retain)
+        print('retain length: ' + str(retain_length))
         fittest = agents[:retain_length]
         rest = agents[retain_length:]
         randomly_selected = self.random_selection(rest)
-        return fittest + randomly_selected
+        fittest_agents = fittest + randomly_selected
+        print('len of fittest + random selection: ' + str(len(fittest_agents)))
+        return fittest_agents
     
 #   agents is an array of tuples of (agent, score)
     def random_selection(self, agents):
@@ -58,21 +62,25 @@ class GeneticEvolution():
         for agent in selected_agents:
             if self.mutate_rate > random():
                 self.mutate(agent)
-        return selected_agents + children
+        new_agents = selected_agents + children
+#        print('pop size: ' + str(population_size))
+#        print('len of selected agents: ' + str(len(selected_agents)))
+#        print('len of new agents: ' + str(len(new_agents)))
+#        print()
+        return new_agents
     
     def crossover(self, male, female):
         child = {}
         male_params = male.get_params()
         female_params = female.get_params()
-        for (male_key, male_value), (female_key, female_value) in zip(male_params.items(), female_params.items()):
-            shape = male_value.shape
-            male_dna = male_value.flatten()
-            female_dna = female_value.flatten()
-            cut = randint(0, len(male_dna) - 1)
-#            print(str(len(female_dna)) +  ' ' + str(len(male_dna)))
-            new_dna = np.append(male_dna[:int(cut)], female_dna[int(cut):])
-#            print('new dna: ' + str(new_dna.shape))
-            child[male_key] = new_dna.reshape(shape)
+        keys = [key for key in male_params.keys()]
+        for key in keys:
+            shape = male_params[key].shape
+            male_dna = male_params[key].flatten()
+            female_dna = female_params[key].flatten()
+            cut = len(male_dna) / 2
+            new_dna = np.concatenate((male_dna[:int(cut)], female_dna[int(cut):]), axis = 0)
+            child[key] = new_dna.reshape(shape)
         return child
     
     def mutate(self, agent):
@@ -98,30 +106,40 @@ class GeneticEvolution():
         bot = Bot()
         
         agents = self.generate_init_population(population_size, layer_dims)
-        agents_scores = []
-        scores = []
+        
+        
         all_scores = []
         
         for epoch in range(epochs):
-            
+            agents_scores = []
+            scores = []
             for agent in agents:
-                score, steps = bot.play_game(web_controller, agent, 40, 40)
+                score, steps = bot.play_game(web_controller, agent, 20, 20)
                 agents_scores.append((agent, self.calculate_fitness(int(score), int(steps))))
                 scores.append(score)
                 web_controller.restart_game()
-            
+              
+            self.notify(epoch, scores)
+            agents_sorted = []
             agents_sorted = self.sort_agents_by_fitness(agents_scores)
-
-            fittest_agents = self.get_fittest_agents(agents_sorted)
-            fittest_agents = [agent[0] for agent in fittest_agents]
+#            print(agents_sorted)
             
-            os.makedirs("generation " + str(epoch + 1))    
-            self.saveAgent(fittest_agents[0].get_params(), "generation " +  str(epoch + 1), "fittest")
+#            print('len of agents sorted in loop: ' + str(len(agents_sorted)))
 
+            fittest_agents = []
+            fittest_agents = self.get_fittest_agents(agents_sorted)
+#            print(fittest_agents)
+            fittest_agents = [agent[0] for agent in fittest_agents]
+#            print('len of fittest agents in loop: ' + str(len(fittest_agents)))
+            
+#            os.makedirs("generation " + str(epoch + 1))    
+#            self.saveAgent(fittest_agents[0].get_params(), "generation " +  str(epoch + 1), "fittest")
+            agents = []
             agents = self.generate_new_population(population_size, layer_dims, fittest_agents)
+#            print('len of new agents in loop: ' + str(len(agents)))
+            
             all_scores.append(scores)
             
-            self.notify(epoch, scores)
             
             scores = []
         return all_scores, agents
@@ -140,27 +158,12 @@ class GeneticEvolution():
             pickle.dump(agent_params, f, pickle.HIGHEST_PROTOCOL)
     
 GA = GeneticEvolution()
-gen, agents = GA.Evolve(10, 50, [40 * 40 * 3, 900, 230, 90, 20, 4])
-
+gen, agents = GA.Evolve(50, 60, [16, 8, 4])
 
 #def load_obj(name):
 #    with open(name+'.pkl','rb') as f:
 #        return pickle.load(f)
 #
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
