@@ -1,8 +1,6 @@
 from deep_neural_net_class import AgentMind
-import sys, os
-sys.path.append(os.path.abspath(os.path.join('.', 'bot')))
 from bot import Bot
-#from web_controller import WebController
+from web_controller import WebController
 from random import random, randint
 import numpy as np
 import smtplib
@@ -29,12 +27,16 @@ class GeneticEvolution():
 #   agents is an array of tuples of (agent, score)
     def get_fittest_agents(self, agents):
         retain_length = int(len(agents) * self.retain)
-        print('retain length: ' + str(retain_length))
+#        print('retain length: ' + str(retain_length))
+        fittest = []
         fittest = agents[:retain_length]
+        rest = []
         rest = agents[retain_length:]
+        randomly_selected = []
         randomly_selected = self.random_selection(rest)
+        fittest_agents = []
         fittest_agents = fittest + randomly_selected
-        print('len of fittest + random selection: ' + str(len(fittest_agents)))
+#        print('len of fittest + random selection: ' + str(len(fittest_agents)))
         return fittest_agents
     
 #   agents is an array of tuples of (agent, score)
@@ -62,6 +64,7 @@ class GeneticEvolution():
         for agent in selected_agents:
             if self.mutate_rate > random():
                 self.mutate(agent)
+        new_agents = []
         new_agents = selected_agents + children
 #        print('pop size: ' + str(population_size))
 #        print('len of selected agents: ' + str(len(selected_agents)))
@@ -95,7 +98,7 @@ class GeneticEvolution():
         agent.set_params(params)
         return agent
     
-    def Evolve(self, epochs, population_size, layer_dims):
+    def Evolve(self, epochs, population_size, layer_dims, old_agents = [], generate_population = True):
         game_selectors = {
                             'restart_game_selector':   ".restart-button",
                             'get_score_selector':      ".score-container",
@@ -105,7 +108,17 @@ class GeneticEvolution():
         web_controller = WebController('https://gabrielecirulli.github.io/2048/', game_selectors)
         bot = Bot()
         
-        agents = self.generate_init_population(population_size, layer_dims)
+        if generate_population == True:
+            agents = self.generate_init_population(population_size, layer_dims)
+        else:
+            agents = old_agents
+        
+        fit_agent_1 = self.load_agent("fittest","1460")[0]
+        fit_agent_2 = self.load_agent("fittest","1400")[0]
+        fit_agent_3 = self.load_agent("fittest","1208")[0]
+        agents.append(fit_agent_1)
+        agents.append(fit_agent_2)
+        agents.append(fit_agent_3)
         
         
         all_scores = []
@@ -113,11 +126,22 @@ class GeneticEvolution():
         for epoch in range(epochs):
             agents_scores = []
             scores = []
+            i = 0
             for agent in agents:
                 score, steps = bot.play_game(web_controller, agent, 20, 20)
-                agents_scores.append((agent, self.calculate_fitness(int(score), int(steps))))
-                scores.append(score)
+                
+                scr = ""
+                for c in score:
+                    if c.isdigit():
+                        scr = scr + c
+                    else:
+                        break
+                print(scr)
+#                self.save_agent((agent, scr), "fittest", str(scr) + ' ' + str(i) + ' ' + str(epoch))
+                agents_scores.append((agent, self.calculate_fitness(int(scr), int(steps))))
+                scores.append(scr)
                 web_controller.restart_game()
+                i = i + 1
               
             self.notify(epoch, scores)
             agents_sorted = []
@@ -128,45 +152,44 @@ class GeneticEvolution():
 
             fittest_agents = []
             fittest_agents = self.get_fittest_agents(agents_sorted)
+
 #            print(fittest_agents)
             fittest_agents = [agent[0] for agent in fittest_agents]
 #            print('len of fittest agents in loop: ' + str(len(fittest_agents)))
             
 #            os.makedirs("generation " + str(epoch + 1))    
-#            self.saveAgent(fittest_agents[0].get_params(), "generation " +  str(epoch + 1), "fittest")
+            
             agents = []
             agents = self.generate_new_population(population_size, layer_dims, fittest_agents)
 #            print('len of new agents in loop: ' + str(len(agents)))
-            
+                        
             all_scores.append(scores)
             
             
             scores = []
         return all_scores, agents
     
-    def notify(self, epoch, scores):
+    def notify(self, epoch, scores):    
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
         server.login('yahya.alaa.automatic@gmail.com', 'yahya.testing')
         
-        msg = str(scores)
+        msg = str(scores) + ' ' + str(len(scores))
         server.sendmail('yahya.alaa.automatic@gmail.com', 'yahya.alaa.automatic@gmail.com', msg)
         server.quit()
         
-    def saveAgent(self, agent_params, folder_name, file_name):
+    def save_agent(self, agent_params, folder_name, file_name):
         with open(folder_name + "/" + file_name + ".pkl", "wb") as f:
             pickle.dump(agent_params, f, pickle.HIGHEST_PROTOCOL)
+            
+    def load_agent(self, folder_name, file_name):
+        with open(folder_name + "/" + file_name + ".pkl", "rb") as f:
+            return pickle.load(f)
+    
     
 GA = GeneticEvolution()
-gen, agents = GA.Evolve(50, 60, [16, 8, 4])
 
-#def load_obj(name):
-#    with open(name+'.pkl','rb') as f:
-#        return pickle.load(f)
-#
-
-
-
+gen, agents = GA.Evolve(10, 100, [21, 8, 4], new_agents, False)
 
 
 

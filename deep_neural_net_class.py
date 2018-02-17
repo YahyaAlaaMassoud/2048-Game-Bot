@@ -16,9 +16,9 @@ class AgentMind():
         parameters = {}
         L = len(layers_dims)
         for l in range(1, L):
-            parameters['W' + str(l)] = np.random.randn(layers_dims[l], layers_dims[l - 1])# * np.sqrt(2. / layers_dims[l - 1]) #/ np.sqrt(layers_dims[l - 1])#* np.sqrt(2. / layers_dims[l - 1])
+            parameters['W' + str(l)] = np.random.randn(layers_dims[l], layers_dims[l - 1]) * np.sqrt(2. / layers_dims[l - 1]) #/ np.sqrt(layers_dims[l - 1])#* np.sqrt(2. / layers_dims[l - 1])
 #            parameters['b' + str(l)] = np.zeros((layers_dims[l], 1))
-            parameters['b' + str(l)] = np.random.randn(layers_dims[l], 1)
+            parameters['b' + str(l)] = np.zeros((layers_dims[l], 1))#np.random.randn(layers_dims[l], 1)
         return parameters
     
     def linear_forward(self, A, W, b):
@@ -29,9 +29,9 @@ class AgentMind():
         if activation == "softmax":
             Z = self.linear_forward(A_prev, W, b)
             A, _ = softmax(Z)
-        elif activation == "sigmoid":
+        elif activation == "relu":
             Z = self.linear_forward(A_prev, W, b)
-            A, _ = sigmoid(Z)
+            A, _ = relu(Z)
         return A
     
     def get_best_move(self, X, parameters):
@@ -39,7 +39,7 @@ class AgentMind():
         L = len(parameters) // 2    
         for l in range(1, L):
             A_prev = A 
-            A = self.activate_forward(A_prev, parameters['W' + str(l)], parameters['b' + str(l)], activation = "sigmoid")
+            A = self.activate_forward(A_prev, parameters['W' + str(l)], parameters['b' + str(l)], activation = "relu")
         AL = self.activate_forward(A, parameters['W' + str(L)], parameters['b' + str(L)], activation = "softmax")
         AL[AL == np.max(AL)] = 1
         AL[AL != np.max(AL)] = 0

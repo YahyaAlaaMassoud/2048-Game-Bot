@@ -5,19 +5,34 @@ import time
 import numpy as np
 from base64 import b16encode
 
+#color_to_number = {
+#                     "b'cdc1b4'": 0,
+#                     "b'eee4da'": 2,
+#                     "b'ede0c8'": 4,
+#                     "b'f2b179'": 8,
+#                     "b'f59563'": 16,
+#                     "b'f67c5f'": 32,
+#                     "b'f65e3b'": 64,
+#                     "b'edcf72'": 128,
+#                     "b'edcc61'": 256,
+#                     "b'edc850'": 512,
+#                     "b'edc53f'": 1024,
+#                     "b'edc22e'": 2048
+#                  }
+
 color_to_number = {
-                     "b'cdc1b4'": 0,
-                     "b'eee4da'": 2,
-                     "b'ede0c8'": 4,
-                     "b'f2b179'": 8,
-                     "b'f59563'": 16,
-                     "b'f67c5f'": 32,
-                     "b'f65e3b'": 64,
-                     "b'edcf72'": 128,
-                     "b'edcc61'": 256,
-                     "b'edc850'": 512,
-                     "b'edc53f'": 1024,
-                     "b'edc22e'": 2048
+                     (205,193,180): 0,
+                     (238,228,218): 2,
+                     (237,224,200): 4,
+                     (242,177,121): 8,
+                     (245,149,99): 16,
+                     (246,124,95): 32,
+                     (246,94,59): 64,
+                     (237,207,114): 128,
+                     (237,204,97): 256,
+                     (237,200,80): 512,
+                     (237,197,63): 1024,
+                     (237,194,46): 2048
                   }
 
 def screen_grab(x, y, square_pad, image_size):
@@ -33,12 +48,23 @@ def screen_grab(x, y, square_pad, image_size):
 def get_matrix(image):
     image = image.convert('RGB')
     matrix = []
+    keys = [key for key in color_to_number.keys()]
     x = 30
     for i in range(4):
         y = 30
         for j in range(4):
             r, g, b = image.getpixel((x, y))
-            matrix.append(color_to_number[str(b16encode(bytes((r, g, b)))).lower()])
+#            matrix.append(color_to_number[str(b16encode(bytes((r, g, b)))).lower()])
+            ok = False
+            for key in keys:
+                if key == (r,g,b):
+                    matrix.append(color_to_number[(r,g,b)])
+                    ok = True
+                    break
+            if ok == False:
+                print('problem happened while extractin colors')
+                matrix.append(0)
+#            print(image.getpixel((x, y)))
             y = y + 120
         x = x + 120
     return matrix
@@ -47,7 +73,7 @@ def get_state(x, y, square_pad, image_size):
     im = screen_grab(x, y, square_pad, image_size)
     matrix = get_matrix(im)
     matrix = normalize_matrix(matrix)
-    return np.array(matrix).reshape(len(matrix), 1)
+    return np.array(matrix).reshape(1, len(matrix)), matrix
 
 def normalize_matrix(mat):
     maxi = max(mat)
@@ -72,19 +98,10 @@ def resize(image, size):
 #mat = normalize_matrix(mat)
 #mat = np.array(mat)
 #print(b'#'+b16encode(bytes((238, 228, 218))))
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
+    
+
+
+
+
+
+
