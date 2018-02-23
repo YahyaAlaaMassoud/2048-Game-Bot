@@ -23,18 +23,19 @@ class Bot():
 #        self.web_controller = WebController('https://gabrielecirulli.github.io/2048/', self.game_selectors)
        
     def play_game(self, controller, agent, shape_x, shape_y):
-        time.sleep(1)
+        time.sleep(0.5)
         params = agent.get_params()
         number_of_moves = 0
         number_of_invalid_moves = 0
         last_state = np.zeros((21, 1))
         consecutive_invalid = 0 
+        maximum_value = 0
         while controller.is_game_over() == False:
-            state, _ = grab.get_state(425, 230, 500, (shape_x, shape_y))
+            state, _, max_value = grab.get_state(545, 370, 500, (shape_x, shape_y))
+            maximum_value = max(maximum_value, int(max_value))
             grid_state = state
             
-#            print(state.reshape(4, 4).T)
-#            print()
+            s = state.reshape(4, 4).T
             
             valid_up = int(self.check_valid_up(state.reshape(4, 4).T))
             valid_down = int(self.check_valid_down(state.reshape(4, 4).T))
@@ -74,14 +75,15 @@ class Bot():
                 number_of_invalid_moves = number_of_invalid_moves + 1
                 consecutive_invalid = consecutive_invalid + 1
                 last_state = grid_state
-                if consecutive_invalid == 75:
+                if consecutive_invalid == 80:
                     break
                 continue
             else:
                 consecutive_invalid = 0
                 last_state = grid_state
+#            print(s)
             time.sleep(0.4)
-        return controller.get_score(), number_of_moves
+        return controller.get_score(), number_of_moves, maximum_value
     
     def perform_move(self, direction):
         win32api.keybd_event(self.direction_codes[direction], 0, 0, 0)

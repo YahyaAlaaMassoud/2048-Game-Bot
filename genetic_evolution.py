@@ -1,7 +1,7 @@
 from deep_neural_net_class import AgentMind
 from bot import Bot
 from web_controller import WebController
-from random import random, randint
+from random import random, randint, shuffle
 import numpy as np
 import smtplib
 from grab import screen_grab
@@ -9,7 +9,7 @@ import time
 import pickle
 
 class GeneticEvolution():
-    def __init__(self, retain = 0.3, random_select = 0.08, mutate_rate = 0.08):
+    def __init__(self, retain = 0.2, random_select = 0.05, mutate_rate = 0.03):
         self.retain = retain
         self.random_select = random_select
         self.mutate_rate = mutate_rate
@@ -17,8 +17,8 @@ class GeneticEvolution():
     def generate_init_population(self, population_size, layer_dims):
         return [AgentMind(layer_dims) for x in range(population_size)]
     
-    def calculate_fitness(self, agent_score, agent_moves):
-        return agent_score# / agent_moves
+    def calculate_fitness(self, agent_score):
+        return agent_score
     
 #   agents is an array of tuples of (agent, score)
     def sort_agents_by_fitness(self, agents):
@@ -27,7 +27,6 @@ class GeneticEvolution():
 #   agents is an array of tuples of (agent, score)
     def get_fittest_agents(self, agents):
         retain_length = int(len(agents) * self.retain)
-#        print('retain length: ' + str(retain_length))
         fittest = []
         fittest = agents[:retain_length]
         rest = []
@@ -36,14 +35,13 @@ class GeneticEvolution():
         randomly_selected = self.random_selection(rest)
         fittest_agents = []
         fittest_agents = fittest + randomly_selected
-#        print('len of fittest + random selection: ' + str(len(fittest_agents)))
         return fittest_agents
     
 #   agents is an array of tuples of (agent, score)
     def random_selection(self, agents):
         randomly_selected = []
         for agent in agents:
-            if self.random_select > random():# and agent[1] != 0.:
+            if self.random_select > random():
                 randomly_selected.append(agent)
         return randomly_selected
     
@@ -51,6 +49,14 @@ class GeneticEvolution():
     def generate_new_population(self, population_size, layer_dims, selected_agents):
         agents_left = population_size - len(selected_agents)
         children = []
+        children.append(selected_agents[0])
+        top_agents = len(selected_agents) // 3
+        for i in range(top_agents):
+            for j in range(i, top_agents):
+                child_params = self.crossover(selected_agents[i], selected_agents[j])
+                child = AgentMind(layer_dims)
+                child.set_params(child_params)
+                children.append(child)
         while len(children) < agents_left:
             male_position = randint(0, len(selected_agents) - 1)
             female_position = randint(0, len(selected_agents) - 1)
@@ -58,43 +64,85 @@ class GeneticEvolution():
                 child_params = self.crossover(selected_agents[male_position], selected_agents[female_position])
                 child = AgentMind(layer_dims)
                 child.set_params(child_params)
-                if self.mutate_rate > random():
-                    self.mutate(child)
                 children.append(child)
-        for agent in selected_agents:
-            if self.mutate_rate > random():
-                self.mutate(agent)
         new_agents = []
         new_agents = selected_agents + children
-#        print('pop size: ' + str(population_size))
-#        print('len of selected agents: ' + str(len(selected_agents)))
-#        print('len of new agents: ' + str(len(new_agents)))
-#        print()
+        for agent in new_agents:
+            if self.mutate_rate > random():
+                agent = self.mutate(agent)
+        
+        print('pop size: ' + str(population_size))
+        print('len of selected agents: ' + str(len(selected_agents)))
+        print('len of new agents: ' + str(len(new_agents)))
+        print()
         return new_agents
     
+#    uniform crossover
     def crossover(self, male, female):
         child = {}
         male_params = male.get_params()
         female_params = female.get_params()
+        dims = []
+        all_male_params = []
+        all_female_params = []
         keys = [key for key in male_params.keys()]
         for key in keys:
-            shape = male_params[key].shape
+            dims.append((key, male_params[key].shape))
             male_dna = male_params[key].flatten()
             female_dna = female_params[key].flatten()
-            cut = len(male_dna) / 2
-            new_dna = np.concatenate((male_dna[:int(cut)], female_dna[int(cut):]), axis = 0)
-            child[key] = new_dna.reshape(shape)
+            all_male_params = all_male_params + male_dna.tolist()
+            all_female_params = all_female_params + female_dna.tolist()
+        new_dna = []
+        for i in range(len(all_male_params)):
+            if random() > 0.5:
+                new_dna.append(all_male_params[i])
+            else:
+                new_dna.append(all_female_params[i])
+        last_idx = 0
+        for dim in dims:
+            child[dim[0]] = np.array(new_dna[last_idx : last_idx + dim[1][0] * dim[1][1]]).reshape(dim[1])
+            last_idx = last_idx + dim[1][0] * dim[1][1]
         return child
     
     def mutate(self, agent):
         params = agent.get_params()
-        for (key, value) in params.items():
-            shape = value.shape
-            dna = value.flatten()
-            mutate_position = randint(0, len(dna) - 1)
-            dna[mutate_position] = np.random.randn()
-            dna = dna.reshape(shape)
-            params[key] = dna
+        dims = []
+        all_agent_params = []
+        keys = [key for key in params.keys()]
+        for key in keys:
+            dims.append((key, params[key].shape))
+            agent_dna = params[key].flatten()
+            all_agent_params = all_agent_params + agent_dna.tolist()
+        r = randint(0, 3)
+        if r == 0:
+            mutate_position = randint(0, len(all_agent_params) - 1)
+            all_agent_params[mutate_position] = np.random.randn()
+        elif r == 1:
+            i, j = 0, 0
+            while i == j:
+                i = randint(0, len(all_agent_params) - 1)
+                j = randint(0, len(all_agent_params) - 1)
+            all_agent_params[i], all_agent_params[j] = all_agent_params[j], all_agent_params[i]
+        elif r == 2:
+            i, j = 0, 0
+            while i >= j:
+                i = randint(0, len(all_agent_params) - 1)
+                j = randint(0, len(all_agent_params) - 1)
+            cpy = all_agent_params[i:j]
+            shuffle(cpy)
+            all_agent_params[i:j] = cpy
+        else:
+            i, j = 0, 0
+            while i >= j:
+                i = randint(0, len(all_agent_params) - 1)
+                j = randint(0, len(all_agent_params) - 1)
+            cpy = all_agent_params[i:j][::-1]
+            all_agent_params[i:j] = cpy
+        last_idx = 0
+        for dim in dims:
+            param = np.array(all_agent_params[last_idx : last_idx + dim[1][0] * dim[1][1]]).reshape(dim[1])
+            last_idx = last_idx + dim[1][0] * dim[1][1]
+            params[dim[0]] = param
         agent.set_params(params)
         return agent
     
@@ -106,62 +154,60 @@ class GeneticEvolution():
                             'scroll_to_game_selector': ".game-container"
                          }
         web_controller = WebController('https://gabrielecirulli.github.io/2048/', game_selectors)
+        time.sleep(60)
         bot = Bot()
         
         if generate_population == True:
             agents = self.generate_init_population(population_size, layer_dims)
         else:
             agents = old_agents
+            
+        good_agent_1 = self.load_agent("fittest", "796")[0]
+        good_agent_2 = self.load_agent("fittest", "1444")[0]
+        good_agent_3 = self.load_agent("fittest", "3880")[0]
         
-        fit_agent_1 = self.load_agent("fittest","1460")[0]
-        fit_agent_2 = self.load_agent("fittest","1400")[0]
-        fit_agent_3 = self.load_agent("fittest","1208")[0]
-        agents.append(fit_agent_1)
-        agents.append(fit_agent_2)
-        agents.append(fit_agent_3)
+        agents.append(good_agent_1)
+        agents.append(good_agent_2)
+        agents.append(good_agent_3)
         
-        
+
         all_scores = []
         
         for epoch in range(epochs):
+            
             agents_scores = []
             scores = []
+            maximum_value = 0
             i = 0
+            
             for agent in agents:
-                score, steps = bot.play_game(web_controller, agent, 20, 20)
-                
+                score, steps, max_value = bot.play_game(web_controller, agent, 20, 20)
+                maximum_value = max(maximum_value, int(max_value))
                 scr = ""
                 for c in score:
                     if c.isdigit():
                         scr = scr + c
                     else:
                         break
-                print(scr)
-#                self.save_agent((agent, scr), "fittest", str(scr) + ' ' + str(i) + ' ' + str(epoch))
-                agents_scores.append((agent, self.calculate_fitness(int(scr), int(steps))))
+
+                self.save_agent((agent, scr), "fittest", str(scr) + ' ' + str(i) + ' ' + str(epoch))
+                agents_scores.append((agent, self.calculate_fitness(int(scr))))
                 scores.append(scr)
                 web_controller.restart_game()
                 i = i + 1
               
-            self.notify(epoch, scores)
+            self.notify(epoch, scores, maximum_value)
             agents_sorted = []
             agents_sorted = self.sort_agents_by_fitness(agents_scores)
-#            print(agents_sorted)
             
-#            print('len of agents sorted in loop: ' + str(len(agents_sorted)))
-
+            
             fittest_agents = []
             fittest_agents = self.get_fittest_agents(agents_sorted)
-
-#            print(fittest_agents)
             fittest_agents = [agent[0] for agent in fittest_agents]
-#            print('len of fittest agents in loop: ' + str(len(fittest_agents)))
             
-#            os.makedirs("generation " + str(epoch + 1))    
             
             agents = []
             agents = self.generate_new_population(population_size, layer_dims, fittest_agents)
-#            print('len of new agents in loop: ' + str(len(agents)))
                         
             all_scores.append(scores)
             
@@ -169,14 +215,33 @@ class GeneticEvolution():
             scores = []
         return all_scores, agents
     
-    def notify(self, epoch, scores):    
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login('yahya.alaa.automatic@gmail.com', 'yahya.testing')
+    def notify(self, epoch, scores, maximum_value):    
+        try:
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.starttls()
+            server.login('yahya.alaa.automatic@gmail.com', 'yahya.testing')
+            
+            maxi = self.get_maximum_fitness(scores)
+            avg = self.get_average_fitness(scores)
+            
+            msg = str(scores) + ' \nlen: ' + str(len(scores)) + '\n max value: ' + str(maximum_value) + ' \n max: ' + str(maxi) + ' \n avg: ' + str(avg)
+            server.sendmail('yahya.alaa.automatic@gmail.com', 'yahya.alaa.automatic@gmail.com', msg)
+            server.quit()
+        except Exception:
+            print('error happened while sending email ' + str(maxi) + ' ' + str(avg))
+            
         
-        msg = str(scores) + ' ' + str(len(scores))
-        server.sendmail('yahya.alaa.automatic@gmail.com', 'yahya.alaa.automatic@gmail.com', msg)
-        server.quit()
+    def get_average_fitness(self, scores):
+        summation = 0
+        for s in scores:
+            summation = summation + int(s)
+        return float(summation / len(scores))
+    
+    def get_maximum_fitness(self, scores):
+        maxi = 0
+        for s in scores:
+            maxi = max(maxi, int(s))
+        return maxi
         
     def save_agent(self, agent_params, folder_name, file_name):
         with open(folder_name + "/" + file_name + ".pkl", "wb") as f:
@@ -189,7 +254,7 @@ class GeneticEvolution():
     
 GA = GeneticEvolution()
 
-gen, agents = GA.Evolve(10, 100, [21, 8, 4], new_agents, False)
+gen, agents = GA.Evolve(50, 110, [21, 8, 4])
 
 
 
