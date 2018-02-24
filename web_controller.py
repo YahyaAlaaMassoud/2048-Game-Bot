@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException
 import time
+import numpy as np
 
 class WebController():
     def __init__(self, game_url, selectors = {}, open_game = True):
@@ -37,6 +38,28 @@ class WebController():
                 return True
         except NoSuchElementException:
             return False
+    def get_grid(self):
+        grid = np.zeros(shape=(4,4), dtype='uint16')
+        for x in self.driver.find_elements_by_class_name('tile'):
+            cl = x.get_attribute('class').split()
+            for t in cl:
+                if t.startswith('tile-position-'):
+                    pos = int(t[14])-1, int(t[16])-1
+                elif t.startswith('tile-') and t[5].isdigit():
+                    v = int(t[5:])
+            grid[pos[1], pos[0]] = v
+        grid = grid.reshape(1, len(grid.flatten()))
+        max_value = np.max(grid)
+        full_grid = grid
+        grid = np.log2(grid) / np.log2(np.max(grid))
+        grid[grid <= 0] = 0
+        grid_list = grid.reshape(len(grid.flatten()), 1).tolist()
+        new_grid = []
+        for i in range(4):
+            for j in range(4):
+                new_grid.append(grid_list[i + j * 4])
+        grid = np.array(new_grid).reshape(1, len(new_grid))
+        return grid, full_grid, max_value
     def close_game(self):
         self.driver.close()
         
@@ -49,3 +72,13 @@ class WebController():
 #                 }
 #    
 #controller = WebController('https://gabrielecirulli.github.io/2048/', game_selectors)
+
+
+
+
+
+
+
+
+
+

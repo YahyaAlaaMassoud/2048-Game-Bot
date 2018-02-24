@@ -77,9 +77,11 @@ def get_matrix(image):
 
 def get_state(x, y, square_pad, image_size):
     im = screen_grab(x, y, square_pad, image_size)
-    matrix, max_value = get_matrix(im)
-    matrix = normalize_matrix(matrix)
-    return np.array(matrix).reshape(1, len(matrix)), matrix, max_value
+    matrix_full, max_value = get_matrix(im)
+#    print(np.array(matrix).reshape(1, len(matrix)).reshape(4,4).T)
+#    print()
+    matrix = normalize_matrix(matrix_full)
+    return np.array(matrix).reshape(1, len(matrix)), np.array(matrix_full).reshape(1, len(matrix_full)), max_value
 
 def normalize_matrix(mat):
     maxi = max(mat)

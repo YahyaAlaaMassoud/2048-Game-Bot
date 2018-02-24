@@ -7,9 +7,10 @@ import smtplib
 from grab import screen_grab
 import time
 import pickle
+import glob, os, sys
 
 class GeneticEvolution():
-    def __init__(self, retain = 0.2, random_select = 0.05, mutate_rate = 0.03):
+    def __init__(self, retain = 0.25, random_select = 0.05, mutate_rate = 0.03):
         self.retain = retain
         self.random_select = random_select
         self.mutate_rate = mutate_rate
@@ -49,7 +50,6 @@ class GeneticEvolution():
     def generate_new_population(self, population_size, layer_dims, selected_agents):
         agents_left = population_size - len(selected_agents)
         children = []
-        children.append(selected_agents[0])
         top_agents = len(selected_agents) // 3
         for i in range(top_agents):
             for j in range(i, top_agents):
@@ -67,14 +67,14 @@ class GeneticEvolution():
                 children.append(child)
         new_agents = []
         new_agents = selected_agents + children
-        for agent in new_agents:
+        for i in range(len(new_agents)):
             if self.mutate_rate > random():
-                agent = self.mutate(agent)
-        
-        print('pop size: ' + str(population_size))
-        print('len of selected agents: ' + str(len(selected_agents)))
-        print('len of new agents: ' + str(len(new_agents)))
-        print()
+                new_agents[i] = self.mutate(new_agents[i])
+        new_agents.append(selected_agents[0])
+#        print('pop size: ' + str(population_size))
+#        print('len of selected agents: ' + str(len(selected_agents)))
+#        print('len of new agents: ' + str(len(new_agents)))
+#        print()
         return new_agents
     
 #    uniform crossover
@@ -105,6 +105,7 @@ class GeneticEvolution():
         return child
     
     def mutate(self, agent):
+        print(agent)
         params = agent.get_params()
         dims = []
         all_agent_params = []
@@ -161,19 +162,13 @@ class GeneticEvolution():
             agents = self.generate_init_population(population_size, layer_dims)
         else:
             agents = old_agents
-            
-        good_agent_1 = self.load_agent("fittest", "796")[0]
-        good_agent_2 = self.load_agent("fittest", "1444")[0]
-        good_agent_3 = self.load_agent("fittest", "3880")[0]
         
-        agents.append(good_agent_1)
-        agents.append(good_agent_2)
-        agents.append(good_agent_3)
         
-
         all_scores = []
         
+        
         for epoch in range(epochs):
+            
             
             agents_scores = []
             scores = []
@@ -181,7 +176,7 @@ class GeneticEvolution():
             i = 0
             
             for agent in agents:
-                score, steps, max_value = bot.play_game(web_controller, agent, 20, 20)
+                score, steps, max_value = bot.play_game(web_controller, agent)
                 maximum_value = max(maximum_value, int(max_value))
                 scr = ""
                 for c in score:
@@ -190,12 +185,12 @@ class GeneticEvolution():
                     else:
                         break
 
-                self.save_agent((agent, scr), "fittest", str(scr) + ' ' + str(i) + ' ' + str(epoch))
+                self.save_agent((agent, scr), "fittest/23-2-2018/" + str(scr) + ' ' + str(i) + ' ' + str(epoch) + ".pkl")
                 agents_scores.append((agent, self.calculate_fitness(int(scr))))
                 scores.append(scr)
                 web_controller.restart_game()
                 i = i + 1
-              
+                
             self.notify(epoch, scores, maximum_value)
             agents_sorted = []
             agents_sorted = self.sort_agents_by_fitness(agents_scores)
@@ -224,7 +219,7 @@ class GeneticEvolution():
             maxi = self.get_maximum_fitness(scores)
             avg = self.get_average_fitness(scores)
             
-            msg = str(scores) + ' \nlen: ' + str(len(scores)) + '\n max value: ' + str(maximum_value) + ' \n max: ' + str(maxi) + ' \n avg: ' + str(avg)
+            msg = str(scores) + ' \nlen: ' + str(len(scores)) + '\n max tile: ' + str(maximum_value) + ' \n max: ' + str(maxi) + ' \n avg: ' + str(avg)
             server.sendmail('yahya.alaa.automatic@gmail.com', 'yahya.alaa.automatic@gmail.com', msg)
             server.quit()
         except Exception:
@@ -243,18 +238,42 @@ class GeneticEvolution():
             maxi = max(maxi, int(s))
         return maxi
         
-    def save_agent(self, agent_params, folder_name, file_name):
-        with open(folder_name + "/" + file_name + ".pkl", "wb") as f:
+    def save_agent(self, agent_params, path):
+        with open(path, "wb") as f:
             pickle.dump(agent_params, f, pickle.HIGHEST_PROTOCOL)
             
-    def load_agent(self, folder_name, file_name):
-        with open(folder_name + "/" + file_name + ".pkl", "rb") as f:
+    def load_agent(self, path):
+        with open(path, "rb") as f:
             return pickle.load(f)
     
     
 GA = GeneticEvolution()
 
-gen, agents = GA.Evolve(50, 110, [21, 8, 4])
+third_gen_agents = []
+third_gen = glob.glob('fittest/23-2-2018/3rd gen/*.pkl')
+for file in third_gen:
+    third_gen_agents.append(GA.load_agent(file)[0])
+third_gen_agents.append(GA.load_agent('fittest/3880.pkl')[0])
+third_gen_agents.append(GA.load_agent('fittest/3424.pkl')[0])
+third_gen_agents.append(GA.load_agent('fittest/1444.pkl')[0])
 
+gen, agents = GA.Evolve(20, 100, [21, 8, 4], third_gen_agents, False)
+
+
+best_agent = GA.load_agent("fittest/9092.pkl")[0]
+game_selectors = {
+                    'restart_game_selector':   ".restart-button",
+                    'get_score_selector':      ".score-container",
+                    'is_game_over_selector':   ".game-over",
+                    'scroll_to_game_selector': ".game-container"
+                 }
+web_controller = WebController('https://gabrielecirulli.github.io/2048/', game_selectors)
+time.sleep(20)
+bot = Bot()
+
+for i in range(5):
+    scr,_,_=bot.play_game(web_controller, best_agent)
+    print(scr)
+    web_controller.restart_game()
 
 
