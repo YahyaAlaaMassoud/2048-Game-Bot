@@ -3,7 +3,7 @@ import time
 import grab
 import numpy as np
 from web_controller import WebController
-from deep_neural_net_class import AgentMind
+from agent_mind import AgentMind
 import matplotlib.pyplot as plt
 
 class Bot():
