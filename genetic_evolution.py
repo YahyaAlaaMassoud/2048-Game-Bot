@@ -16,8 +16,8 @@ class GeneticEvolution():
     def generate_init_population(self, population_size, layer_dims):
         return [AgentMind(layer_dims) for x in range(population_size)]
     
-    def calculate_fitness(self, agent_score):
-        return agent_score
+    def calculate_fitness(self, agent_score, current_max_score, best_score, max_tile):
+        return 100. * (float(agent_score / current_max_score) + float(agent_score / best_score) + max_tile)
     
     def sort_agents_by_fitness(self, agents = []):
         return sorted(agents, key = lambda x : x.get_fitness(), reverse = True)
@@ -177,18 +177,23 @@ class GeneticEvolution():
             agents = old_agents
         
         all_scores = []
+        best_score = 0
         
         for epoch in range(epochs):
             
             agents_scores = []
+            agents_fitness = []
             scores = []
-            maximum_value = 0
             i = 0
+            current_max_score = 0
+            current_max_tile = 0
             
             for agent in agents:
-                score, steps, max_value = bot.play_game(web_controller, agent)
-                maximum_value = max(maximum_value, int(max_value))
-                print('agent: ' + str(score) + ' ' + str(max_value))
+                score, steps, max_tile = bot.play_game(web_controller, agent)
+                agents_fitness.append((agent, score, max_tile))
+                current_max_tile = max(current_max_tile, int(max_tile))
+
+                print('agent: ' + str(score) + ' ' + str(max_tile))
                 
                 scr = ""
                 for c in score:
@@ -196,15 +201,18 @@ class GeneticEvolution():
                         scr = scr + c
                     else:
                         break
+                score = int(scr)
+                current_max_score = max(current_max_score, score)
+                best_score = max(best_score, score)
 
-                agent.set_fitness(self.calculate_fitness(int(scr)))
+                agent.set_fitness(self.calculate_fitness(score, current_max_score, best_score, max_tile))
                 agents_scores.append(agent)
-                scores.append(scr)
-#                self.save_agent(agent, "fittest/27-2-2018 new algo/" + str(scr) + ' ' + str(i) + ' ' + str(epoch) + ".pkl")
+                scores.append((score, self.calculate_fitness(score, current_max_score, best_score, max_tile)))
+#                self.save_agent(agent, "fittest/27-2-2018 new algo/" + str(score) + ' ' + str(i) + ' ' + str(epoch) + ".pkl")
                 web_controller.restart_game()
                 i = i + 1
                 
-#            notify_by_email(epoch, scores, maximum_value)
+#            notify_by_email(epoch, scores, current_max_score)
             
             agents_sorted = []
             agents_sorted = self.sort_agents_by_fitness(agents_scores)
@@ -230,3 +238,19 @@ class GeneticEvolution():
 GA = GeneticEvolution()
 
 gen, agents = GA.Evolve(1, 20, [21, 14, 8, 6, 4])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
