@@ -53,13 +53,13 @@ def notify_by_email(epoch, scores, maximum_value):
     except Exception:
         print('error happened while sending email ' + str(maxi) + ' ' + str(avg))
         
-def get_average_fitness(self, scores):
+def get_average_fitness(scores):
     summation = 0
     for s in scores:
         summation = summation + int(s)
     return float(summation / len(scores))
 
-def get_maximum_fitness(self, scores):
+def get_maximum_fitness(scores):
     maxi = 0
     for s in scores:
         maxi = max(maxi, int(s))

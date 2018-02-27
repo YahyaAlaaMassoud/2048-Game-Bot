@@ -52,3 +52,5 @@ class AgentMind():
         AL[AL != np.max(AL)] = 0
         return get_best_move_direction(AL)
     
+    
+    

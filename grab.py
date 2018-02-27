@@ -67,10 +67,10 @@ def get_matrix(image):
                     ok = True
             matrix.append(color_to_number[ans])
             max_value = max(max_value, int(color_to_number[ans]))
-            if ok == False:
-                print(r,g,b)
-                print(ans)
-                print()
+#            if ok == False:
+#                print(r,g,b)
+#                print(ans)
+#                print()
             y = y + 120
         x = x + 120
     return matrix, max_value

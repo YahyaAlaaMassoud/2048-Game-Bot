@@ -6,10 +6,10 @@ import numpy as np
 from helper_functions import notify_by_email
 import time
 import pickle
-#import glob, os, sys
+import glob, os, sys
 
 class GeneticEvolution():
-    def __init__(self, mutate_rate = 0.05, elitism_rate = 0.05):
+    def __init__(self, mutate_rate = 0.05, elitism_rate = 0.03):
         self.mutate_rate = mutate_rate
         self.elitism_rate = elitism_rate
         
@@ -22,11 +22,10 @@ class GeneticEvolution():
     def sort_agents_by_fitness(self, agents = []):
         return sorted(agents, key = lambda x : x.get_fitness(), reverse = True)
     
-    def tournament_selection(self, agents = [], min_k = 3, max_k = 10):
+    def tournament_selection(self, agents, k):
         tournament_agents = []
-        k = randint(min_k, max_k)
-        
-        print('k: ' + str(k))
+
+#        print('k: ' + str(k))
         
         for i in range(k):
             index = randint(0, len(agents) - 1)
@@ -35,21 +34,31 @@ class GeneticEvolution():
         tournament_agents = set(tournament_agents)
         tournament_agents = self.sort_agents_by_fitness(tournament_agents)
         
-        return tournament_agents[0], tournament_agents[1]
+        return tournament_agents[0]
     
     def generate_new_population(self, population_size, layer_dims, agents = []):
         
+        coupled = {}
         children = []
         top_agents = agents[:int(len(agents) * self.elitism_rate)]
         for agent in top_agents:
             children.append(agent)
         
         while len(children) < population_size:
-            male, female = self.tournament_selection(agents)
-            new_offspring = self.crossover(male, female, layer_dims)
-            if self.mutate_rate > random():
-                new_offspring = self.mutate(new_offspring)
-            children.append(new_offspring)
+            r = randint(3, 10)
+            male, female = self.tournament_selection(agents, r), self.tournament_selection(agents, r)
+            if coupled.get((male, female)) == None and male != female:
+#                print('crossover    -->   male: ' + str(male.get_fitness()) + ' female: ' + str(female.get_fitness()))
+                new_offspring = self.crossover(male, female, layer_dims)
+                coupled[(male, female)] = True
+                coupled[(female, male)] = True
+                if self.mutate_rate > random():
+                    new_offspring = self.mutate(new_offspring)
+                children.append(new_offspring)
+#            elif coupled.get((male, female)) != None:
+#                print('already coupled')
+#            elif male == female:
+#                print('same')
         
         print('pop size: ' + str(population_size))
         print('len of selected agents: ' + str(len(agents)))
@@ -102,6 +111,7 @@ class GeneticEvolution():
         return child_agent
     
     def mutate(self, agent):
+#        print('mutate')
         params = agent.get_params()
         dims = []
         all_agent_params = []
@@ -178,6 +188,7 @@ class GeneticEvolution():
             for agent in agents:
                 score, steps, max_value = bot.play_game(web_controller, agent)
                 maximum_value = max(maximum_value, int(max_value))
+                print('agent: ' + str(score) + ' ' + str(max_value))
                 
                 scr = ""
                 for c in score:
@@ -189,11 +200,11 @@ class GeneticEvolution():
                 agent.set_fitness(self.calculate_fitness(int(scr)))
                 agents_scores.append(agent)
                 scores.append(scr)
-                self.save_agent((agent, scr), "fittest/26-2-2018/" + str(scr) + ' ' + str(i) + ' ' + str(epoch) + ".pkl")
+#                self.save_agent(agent, "fittest/27-2-2018 new algo/" + str(scr) + ' ' + str(i) + ' ' + str(epoch) + ".pkl")
                 web_controller.restart_game()
                 i = i + 1
                 
-            notify_by_email(epoch, scores, maximum_value)
+#            notify_by_email(epoch, scores, maximum_value)
             
             agents_sorted = []
             agents_sorted = self.sort_agents_by_fitness(agents_scores)
@@ -218,12 +229,4 @@ class GeneticEvolution():
     
 GA = GeneticEvolution()
 
-gen, agents = GA.Evolve(5, 20, [21, 14, 8, 6, 4])
-
-
-
-
-
-
-
-
+gen, agents = GA.Evolve(1, 20, [21, 14, 8, 6, 4])
