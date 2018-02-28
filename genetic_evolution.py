@@ -189,7 +189,7 @@ class GeneticEvolution():
             current_max_tile = 0
             
             for agent in agents:
-                score, steps, max_tile = bot.play_game(web_controller, agent)
+                score, steps, max_tile, _ = bot.play_game(web_controller, agent)
                 agents_fitness.append((agent, score, max_tile))
                 current_max_tile = max(current_max_tile, int(max_tile))
 
@@ -242,11 +242,23 @@ gen, agents = GA.Evolve(1, 20, [21, 14, 8, 6, 4])
 
 
 
-
-
-
-
-
+#a = np.array([[0.135759,0.121925,0.102812,0.099937],
+#              [0.0997992,0.0888405,0.076711,0.0724143],
+#              [0.060654,0.0562579,0.037116,0.0161889],
+#              [0.0125498,0.00992495,0.00575871,0.00335193]])
+#
+#b = np.array([[0,2,4,8],[2,4,8,16],[4,8,16,32],[8,16,32,64]])
+#e = np.log2(b) / np.log2(np.max(b))
+#e[e <= 0] = 0
+#
+#d = np.array([[64,32,16,8],
+#              [32,16,8,4],
+#              [16,8,4,2],
+#              [8,4,2,0]])
+#d = np.log2(d) / np.log2(np.max(d))
+#d[d <= 0] = 0
+#
+#c = np.dot(a,e).sum()
 
 
 

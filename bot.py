@@ -30,6 +30,8 @@ class Bot():
         last_state = np.zeros((21, 1))
         consecutive_invalid = 0 
         maximum_value = 0
+        fitness = 0.
+        
         while controller.is_game_over() == False:
             state, state_full, max_value = grab.get_state(545, 370, 500, (20,2))#controller.get_grid()
             maximum_value = max(maximum_value, int(max_value))
@@ -81,8 +83,18 @@ class Bot():
             else:
                 consecutive_invalid = 0
                 last_state = grid_state
-#            print(s)
-#            print()
+
+
+            W = np.array([[0.135759 , 0.121925  , 0.102812  , 0.099937],
+                          [0.0997992, 0.0888405 , 0.076711  , 0.0724143],
+                          [0.060654 , 0.0562579 , 0.037116  , 0.0161889],
+                          [0.0125498, 0.00992495, 0.00575871, 0.00335193]])
+            fitness = fitness + np.dot(s, W).sum()
+            print(s)
+            print(np.dot(s, W))
+            print(np.dot(s, W).sum())
+            print()
+                
             time.sleep(0.135)
         return controller.get_score(), number_of_moves, maximum_value
     
