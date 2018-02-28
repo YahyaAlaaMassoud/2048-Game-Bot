@@ -189,11 +189,11 @@ class GeneticEvolution():
             current_max_tile = 0
             
             for agent in agents:
-                score, steps, max_tile, _ = bot.play_game(web_controller, agent)
+                score, steps, max_tile, accumulated_fitness = bot.play_game(web_controller, agent)
                 agents_fitness.append((agent, score, max_tile))
                 current_max_tile = max(current_max_tile, int(max_tile))
 
-                print('agent: ' + str(score) + ' ' + str(max_tile))
+                print('agent: ' + str(score) + ' ' + str(max_tile) + ' ' + str(accumulated_fitness))
                 
                 scr = ""
                 for c in score:
@@ -205,9 +205,9 @@ class GeneticEvolution():
                 current_max_score = max(current_max_score, score)
                 best_score = max(best_score, score)
 
-                agent.set_fitness(self.calculate_fitness(score, current_max_score, best_score, max_tile))
+                agent.set_fitness(accumulated_fitness)
                 agents_scores.append(agent)
-                scores.append((score, self.calculate_fitness(score, current_max_score, best_score, max_tile)))
+                scores.append((score, accumulated_fitness))
 #                self.save_agent(agent, "fittest/27-2-2018 new algo/" + str(score) + ' ' + str(i) + ' ' + str(epoch) + ".pkl")
                 web_controller.restart_game()
                 i = i + 1

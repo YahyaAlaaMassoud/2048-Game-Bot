@@ -91,12 +91,12 @@ class Bot():
                           [0.0125498, 0.00992495, 0.00575871, 0.00335193]])
             fitness = fitness + np.dot(s, W).sum()
             print(s)
-            print(np.dot(s, W))
-            print(np.dot(s, W).sum())
+            print(np.multiply(s, W))
+            print(np.multiply(s, W).sum())
             print()
                 
             time.sleep(0.135)
-        return controller.get_score(), number_of_moves, maximum_value
+        return controller.get_score(), number_of_moves, maximum_value, fitness
     
     def perform_move(self, direction):
         win32api.keybd_event(self.direction_codes[direction], 0, 0, 0)
