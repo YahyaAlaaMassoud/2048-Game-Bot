@@ -5,7 +5,10 @@ class AgentMind():
     def __init__(self, layers_dims):
         self.__layers_dims = layers_dims
         self.__parameters = self.init_params_he(layers_dims)
-        self.__fitness = 0
+        self.__fitness = 0.
+        
+    def get_layers_dims(self):
+        return self.__layers_dims
         
     def get_params(self):
         return self.__parameters

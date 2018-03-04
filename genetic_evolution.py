@@ -7,11 +7,13 @@ from helper_functions import notify_by_email
 import time
 import pickle
 import glob, os, sys
+import matplotlib.pyplot as plt
 
 class GeneticEvolution():
-    def __init__(self, mutate_rate = 0.05, elitism_rate = 0.03):
+    def __init__(self, mutate_rate = 0.5, elitism_rate = 0.2):
         self.mutate_rate = mutate_rate
         self.elitism_rate = elitism_rate
+        self.worst_fitness = 0.
         
     def generate_init_population(self, population_size, layer_dims):
         return [AgentMind(layer_dims) for x in range(population_size)]
@@ -38,6 +40,7 @@ class GeneticEvolution():
     
     def generate_new_population(self, population_size, layer_dims, agents = []):
         
+        self.worst_fitness = max(self.worst_fitness, agents[len(agents) - 1].get_fitness())
         coupled = {}
         children = []
         top_agents = agents[:int(len(agents) * self.elitism_rate)]
@@ -45,7 +48,8 @@ class GeneticEvolution():
             children.append(agent)
         
         while len(children) < population_size:
-            r = randint(3, 10)
+#            r = randint(3, 8)
+            r = int(len(agents) * 0.07)
             male, female = self.tournament_selection(agents, r), self.tournament_selection(agents, r)
             if coupled.get((male, female)) == None and male != female:
 #                print('crossover    -->   male: ' + str(male.get_fitness()) + ' female: ' + str(female.get_fitness()))
@@ -60,10 +64,10 @@ class GeneticEvolution():
 #            elif male == female:
 #                print('same')
         
-        print('pop size: ' + str(population_size))
-        print('len of selected agents: ' + str(len(agents)))
-        print('len of new agents: ' + str(len(children)))
-        print()
+#        print('pop size: ' + str(population_size))
+#        print('len of selected agents: ' + str(len(agents)))
+#        print('len of new agents: ' + str(len(children)))
+#        print()
         
         return children
     
@@ -187,14 +191,14 @@ class GeneticEvolution():
             i = 0
             current_max_score = 0
             current_max_tile = 0
+            best_fitness = 0.
             
             for agent in agents:
-                score, steps, max_tile, accumulated_fitness = bot.play_game(web_controller, agent)
+                score, steps, max_tile, accumulated_fitness, fitness_norm = bot.play_game(web_controller, agent)
                 agents_fitness.append((agent, score, max_tile))
                 current_max_tile = max(current_max_tile, int(max_tile))
-
-                print('agent: ' + str(score) + ' ' + str(max_tile) + ' ' + str(accumulated_fitness))
-                
+                best_fitness = max(best_fitness, int(100 * (accumulated_fitness / steps)))
+                                
                 scr = ""
                 for c in score:
                     if c.isdigit():
@@ -205,14 +209,16 @@ class GeneticEvolution():
                 current_max_score = max(current_max_score, score)
                 best_score = max(best_score, score)
 
-                agent.set_fitness(accumulated_fitness)
+                agent.set_fitness((float(fitness_norm / steps) ** 2) * score)
+#                print('score" ' + str(score) + ' fitness: ' + str(float(fitness_norm / steps) * score))
                 agents_scores.append(agent)
-                scores.append((score, accumulated_fitness))
-#                self.save_agent(agent, "fittest/27-2-2018 new algo/" + str(score) + ' ' + str(i) + ' ' + str(epoch) + ".pkl")
+                scores.append((score, max_tile, agent.get_fitness()))
+#                self.save_agent(agent, "fittest/[21,10,4]/2 " + str(score) + ' ' + str(i) + ' ' + str(epoch) + ".pkl")
                 web_controller.restart_game()
                 i = i + 1
+
                 
-#            notify_by_email(epoch, scores, current_max_score)
+            notify_by_email(epoch, scores, current_max_tile)
             
             agents_sorted = []
             agents_sorted = self.sort_agents_by_fitness(agents_scores)
@@ -221,7 +227,8 @@ class GeneticEvolution():
             agents = self.generate_new_population(population_size, layer_dims, agents_sorted)
                         
             all_scores.append(scores)
-            
+            self.save_agent(scores, "fittest/2-3-2018/" + str(epoch) + " scores.pkl")
+            self.save_agent(agents, "fittest/2-3-2018/agents " + str(epoch) + ".pkl")
             
             scores = []
         return all_scores, agents
@@ -237,28 +244,18 @@ class GeneticEvolution():
     
 GA = GeneticEvolution()
 
-gen, agents = GA.Evolve(1, 20, [21, 14, 8, 6, 4])
+agents = GA.load_agent('fittest/2-3-2018/agents 2.pkl')
+
+agents = agents[:100]
+
+gen, agents_2 = GA.Evolve(10, 100, [21,10,4], agents, False)
 
 
 
 
-#a = np.array([[0.135759,0.121925,0.102812,0.099937],
-#              [0.0997992,0.0888405,0.076711,0.0724143],
-#              [0.060654,0.0562579,0.037116,0.0161889],
-#              [0.0125498,0.00992495,0.00575871,0.00335193]])
-#
-#b = np.array([[0,2,4,8],[2,4,8,16],[4,8,16,32],[8,16,32,64]])
-#e = np.log2(b) / np.log2(np.max(b))
-#e[e <= 0] = 0
-#
-#d = np.array([[64,32,16,8],
-#              [32,16,8,4],
-#              [16,8,4,2],
-#              [8,4,2,0]])
-#d = np.log2(d) / np.log2(np.max(d))
-#d[d <= 0] = 0
-#
-#c = np.dot(a,e).sum()
+
+
+
 
 
 

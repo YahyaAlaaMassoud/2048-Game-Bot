@@ -31,6 +31,7 @@ class Bot():
         consecutive_invalid = 0 
         maximum_value = 0
         fitness = 0.
+        fitness_norm = 0.
         
         while controller.is_game_over() == False:
             state, state_full, max_value = grab.get_state(545, 370, 500, (20,2))#controller.get_grid()
@@ -89,14 +90,21 @@ class Bot():
                           [0.0997992, 0.0888405 , 0.076711  , 0.0724143],
                           [0.060654 , 0.0562579 , 0.037116  , 0.0161889],
                           [0.0125498, 0.00992495, 0.00575871, 0.00335193]])
-            fitness = fitness + np.dot(s, W).sum()
-            print(s)
-            print(np.multiply(s, W))
-            print(np.multiply(s, W).sum())
-            print()
+            fitness = fitness + np.multiply(s, W).sum()
+            
+            s2 = grid_state.reshape(4, 4).T
+            
+            fitness_norm = fitness_norm + np.multiply(s2, W).sum()
+            
+            
+#            print(s)
+#            print(s2)
+#            print(np.multiply(s, W).sum())
+#            print(np.multiply(s2, W).sum())
+#            print()
                 
             time.sleep(0.135)
-        return controller.get_score(), number_of_moves, maximum_value, fitness
+        return controller.get_score(), number_of_moves - number_of_invalid_moves, maximum_value, fitness, fitness_norm
     
     def perform_move(self, direction):
         win32api.keybd_event(self.direction_codes[direction], 0, 0, 0)
