@@ -1,5 +1,5 @@
 import numpy as np
-from helper_functions import relu, softmax, get_best_move_direction, sigmoid
+from helper_functions import relu, softmax, get_best_move_direction
 
 class AgentMind():
     def __init__(self, layers_dims):
@@ -26,9 +26,8 @@ class AgentMind():
         parameters = {}
         L = len(layers_dims)
         for l in range(1, L):
-            parameters['W' + str(l)] = np.random.randn(layers_dims[l], layers_dims[l - 1]) * np.sqrt(2. / layers_dims[l - 1]) #/ np.sqrt(layers_dims[l - 1])#* np.sqrt(2. / layers_dims[l - 1])
-#            parameters['b' + str(l)] = np.zeros((layers_dims[l], 1))
-            parameters['b' + str(l)] = np.zeros((layers_dims[l], 1))#np.random.randn(layers_dims[l], 1)
+            parameters['W' + str(l)] = np.random.randn(layers_dims[l], layers_dims[l - 1]) * np.sqrt(2. / layers_dims[l - 1])
+            parameters['b' + str(l)] = np.zeros((layers_dims[l], 1))
         return parameters
     
     def linear_forward(self, A, W, b):
@@ -54,6 +53,3 @@ class AgentMind():
         AL[AL == np.max(AL)] = 1
         AL[AL != np.max(AL)] = 0
         return get_best_move_direction(AL)
-    
-    
-    
