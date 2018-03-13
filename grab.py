@@ -5,21 +5,6 @@ import time
 import numpy as np
 from base64 import b16encode
 
-#color_to_number = {
-#                     "b'cdc1b4'": 0,
-#                     "b'eee4da'": 2,
-#                     "b'ede0c8'": 4,
-#                     "b'f2b179'": 8,
-#                     "b'f59563'": 16,
-#                     "b'f67c5f'": 32,
-#                     "b'f65e3b'": 64,
-#                     "b'edcf72'": 128,
-#                     "b'edcc61'": 256,
-#                     "b'edc850'": 512,
-#                     "b'edc53f'": 1024,
-#                     "b'edc22e'": 2048
-#                  }
-
 color_to_number = {
                      (205,193,180): 0,
                      (238,228,218): 2,
@@ -34,16 +19,15 @@ color_to_number = {
                      (237,197,63): 1024,
                      (237,194,46): 2048
                   }
+#    example:
+#    save_image(image, "images/full_snap_" + str(int(time.time())) + ".png", "PNG")
+def save_image(image, path, type_format = "PNG"):
+    image.save(path, type_format)
 
-def screen_grab(x, y, square_pad, image_size):
+def screen_grab(x, y, square_pad):
     box = (x, y, x + square_pad, y + square_pad)
     im = ImageGrab.grab(box)
-#    im = resize(im, (80,80))
-#    im.save("images/"+'full_snap__' +str(int(time.time())) + '.png', 'PNG')
-#    print(im[1,1])
-#    im = resize(im, image_size)
-#    im = img2vec(np.array(im), 0)
-    return im    
+    return im
 
 def get_matrix(image):
     image = image.convert('RGB')
@@ -76,10 +60,8 @@ def get_matrix(image):
     return matrix, max_value
 
 def get_state(x, y, square_pad, image_size):
-    im = screen_grab(x, y, square_pad, image_size)
+    im = screen_grab(x, y, square_pad)
     matrix_full, max_value = get_matrix(im)
-#    print(np.array(matrix).reshape(1, len(matrix)).reshape(4,4).T)
-#    print()
     matrix = normalize_matrix(matrix_full)
     return np.array(matrix).reshape(1, len(matrix)), np.array(matrix_full).reshape(1, len(matrix_full)), max_value
 
@@ -88,24 +70,10 @@ def normalize_matrix(mat):
     normalized = [float(max(0, np.log2(x) / np.log2(maxi))) for x in mat]
     return normalized
 
-def read_empty_grid():
-    im = Image.open("images/empty_grid.png")
+def read_image(path):
+    im = Image.open(path)
     im = img2vec(np.array(im), 0)
     return im
 
-#e = read_empty_grid().T / 255.
-#s = img2vec(np.array(Image.open("images/full_snap__1518535869.png")), 0).T / 255.
-#print(np.abs(np.sum(np.subtract(e, s))))
-
 def resize(image, size):
     return ImageOps.fit(image, size, Image.ANTIALIAS)
-
-
-#im = Image.open('images/full snap.png')
-#mat = get_matrix(im)
-#mat = normalize_matrix(mat)
-#mat = np.array(mat)
-#print(b'#'+b16encode(bytes((238, 228, 218))))
-    
-
-
