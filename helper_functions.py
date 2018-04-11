@@ -12,6 +12,26 @@ def get_best_move_direction(decision):
     if decision[3, 0] == 1:
         return 'right'
     
+def get_action_name(decision):
+    if decision == 0:
+        return 'up'
+    if decision == 1:
+        return 'down'
+    if decision == 2:
+        return 'left'
+    if decision == 3:
+        return 'right'
+    
+def get_action_number(decision):
+    if decision == 'up':
+        return 0
+    if decision == 'down':
+        return 1
+    if decision == 'left':
+        return 2
+    if decision == 'right':
+        return 3
+    
 def sigmoid(x):
     return 1 / (1 + np.exp(-x)), (x)
 

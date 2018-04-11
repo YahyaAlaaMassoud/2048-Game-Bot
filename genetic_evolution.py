@@ -212,7 +212,7 @@ class GeneticEvolution():
                             'scroll_to_game_selector': ".game-container"
                          }
         web_controller = WebController('https://gabrielecirulli.github.io/2048/', game_selectors)
-        time.sleep(60)
+        time.sleep(40)
         bot = Bot()
         
         if generate_population == True:
@@ -277,51 +277,52 @@ class GeneticEvolution():
                 break
         return int(scr)
     
-def main(argv):
-    mutate_rate = 0.05
-    elitism_rate = 0.4
-    crossover_operator = "random"
-    mutation_operator = "random"
-    epochs = 100
-    population_size = 50
-    layer_dims = [21, 10, 4]
-    generate_population = True
-    old_agents = []
-    
-    try:
-        opts, args = getopt.getopt(argv,"h",["mr=","er=","co=","mo=","epochs=","psz=","hl="])
-    except getopt.GetoptError:
-        print('python genetic_evolution.py --mr <mutate_rate> --er <elitism_rate> --co <crossover_operator> --mo <mutation_operator> --epochs <epochs> --psz <population_size> --hl <hidden_layer_units>')
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt == '-h':
-            print('python genetic_evolution.py --mr <mutate_rate> --er <elitism_rate> --co <crossover_operator> --mo <mutation_operator> --epochs <epochs> --psz <population_size> --hl <hidden_layer_units>')
-            sys.exit()
-        elif opt in ("--mr"):
-            mutate_rate = float(arg)
-        elif opt in ("--er"):
-            elitism_rate = float(arg)
-        elif opt in ("--co"):
-            crossover_operator = (arg)
-        elif opt in ("--mo"):
-            mutation_operator = (arg)
-        elif opt in ("--epochs"):
-            epochs = int(arg)
-        elif opt in ("--psz"):
-            population_size = int(arg)
-        elif opt in ("--hl"):
-            layer_dims = [21, int(arg), 4]
-    print(mutate_rate)
-    print(elitism_rate)
-    print(crossover_operator)
-    print(mutation_operator)
-    print(epochs)
-    print(population_size)
-    print(layer_dims)
-    
-    GA = GeneticEvolution(mutate_rate, elitism_rate, crossover_operator, mutation_operator)
-    _,_ = GA.Evolve(epochs, population_size, layer_dims)
+#def main(argv):
+#    mutate_rate = 0.05
+#    elitism_rate = 0.4
+#    crossover_operator = "random"
+#    mutation_operator = "random"
+#    epochs = 100
+#    population_size = 50
+#    layer_dims = [21, 10, 4]
+#    generate_population = True
+#    old_agents = []
+#    
+#    try:
+#        opts, args = getopt.getopt(argv,"h",["mr=","er=","co=","mo=","epochs=","psz=","hl="])
+#    except getopt.GetoptError:
+#        print('python genetic_evolution.py --mr <mutate_rate> --er <elitism_rate> --co <crossover_operator> --mo <mutation_operator> --epochs <epochs> --psz <population_size> --hl <hidden_layer_units>')
+#        sys.exit(2)
+#    for opt, arg in opts:
+#        if opt == '-h':
+#            print('python genetic_evolution.py --mr <mutate_rate> --er <elitism_rate> --co <crossover_operator> --mo <mutation_operator> --epochs <epochs> --psz <population_size> --hl <hidden_layer_units>')
+#            sys.exit()
+#        elif opt in ("--mr"):
+#            mutate_rate = float(arg)
+#        elif opt in ("--er"):
+#            elitism_rate = float(arg)
+#        elif opt in ("--co"):
+#            crossover_operator = (arg)
+#        elif opt in ("--mo"):
+#            mutation_operator = (arg)
+#        elif opt in ("--epochs"):
+#            epochs = int(arg)
+#        elif opt in ("--psz"):
+#            population_size = int(arg)
+#        elif opt in ("--hl"):
+#            layer_dims = [21, int(arg), 4]
+#    print(mutate_rate)
+#    print(elitism_rate)
+#    print(crossover_operator)
+#    print(mutation_operator)
+#    print(epochs)
+#    print(population_size)
+#    print(layer_dims)
+#    
+#    #	gen = load_file('fittest/11-3-2018/agents 1.pkl')
+#    
+GA = GeneticEvolution()
+_,_ = GA.Evolve(3, 25, [21,10,4])#, gen, False)
 
-
-if __name__ == "__main__":
-    main(sys.argv[1:])
+#if __name__ == "__main__":
+#    main(sys.argv[1:])
