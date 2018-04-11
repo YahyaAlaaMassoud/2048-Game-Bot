@@ -10,7 +10,7 @@ import grab
 from helper_functions import get_action_name, get_action_number
 
 class DQL():
-    def __init__(self, input_dim, hidden_dim, output_dim, learning_rate = 0.9, epsilon_min = 0.01, epsilon = 1.0, epsilon_decay = 0.995, episodes = 100, rand_steps = 100, max_experience = 10000, update_freq = 10):
+    def __init__(self, input_dim, hidden_dim, output_dim, learning_rate = 0.9, epsilon_min = 0.01, epsilon = 1.0, epsilon_decay = 0.95, episodes = 200, rand_steps = 100, max_experience = 10000, update_freq = 10):
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
         self.episodes = episodes
@@ -48,7 +48,7 @@ class DQL():
         rewards = []
         
         for episode in range(self.episodes):
-            state, _, _ = grab.get_state(425, 230, 500, (20,20))
+            state, full_state, _ = grab.get_state(425, 230, 500, (20,20))
             total_reward = 0.
             while web_controller.is_game_over() == False:
                 total_steps += 1
@@ -56,19 +56,21 @@ class DQL():
                 if np.random.rand() < self.epsilon:
                     action = np.random.randint(0, self.output_dim)
                 else:
-                    action = np.argmax(self.model.predict(state))
+#                    action = np.argmax(self.model.predict(state))
+                    action = np.argmax(self.model.predict(full_state))
                 action = get_action_name(action)
                 bot.perform_move(action)
-                time.sleep(0.1)
-                new_state, full_state, max_value = grab.get_state(425, 230, 500, (20,20))
+                time.sleep(0.05)
+                new_state, new_full_state, max_value = grab.get_state(425, 230, 500, (20,20))
                 new_score = self.to_int(web_controller.get_score())
-                reward = new_score - score#np.sum(full_state / 2048.)# * 10.
+                reward = new_score - score
                 terminate = web_controller.is_game_over()
                 if terminate == True: 
-                    reward = -10
+                    reward = -100
                 if str(state) == str(new_state):
-                    reward = -1
-                self.experience.add_experience((state, new_state, action, reward, terminate))
+                    reward = -10
+#                self.experience.add_experience((state, new_state, action, reward, terminate))
+                self.experience.add_experience((full_state, new_full_state, action, reward, terminate))
                 
                 if total_steps > self.rand_steps:
                     if total_steps % self.update_freq == 0:
